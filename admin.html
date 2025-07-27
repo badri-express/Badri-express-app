@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>البدري إكسبريس - إدارة</title>
+  <style>
+    body {
+      font-family: 'Tahoma', sans-serif;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background-color: #1e90ff;
+      padding: 15px;
+      text-align: center;
+      color: white;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #87cefa;
+      padding: 10px;
+      gap: 20px;
+    }
+    nav a {
+      text-decoration: none;
+      color: #fff;
+      font-weight: bold;
+    }
+    .container {
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .input-icon {
+      position: relative;
+    }
+    .input-icon input {
+      padding-right: 40px;
+    }
+    .input-icon span {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+    }
+    .check-btn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 8px;
+      font-size: 16px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+    #reportTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    #reportTable th, #reportTable td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    #reportTable th {
+      background-color: #1e90ff;
+      color: white;
+    }
+    .filter {
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <header>البدري إكسبريس - لوحة الإدارة</header>
+  <nav>
+    <a href="index.html">الرئيسية</a>
+    <a href="form.html">تسجيل موقف</a>
+    <a href="report.html">التقارير</a>
+    <a href="admin.html">الإدارة</a>
+  </nav>
+
+  <div class="container">
+    <label for="adminName">الاسم:</label>
+    <input type="text" id="adminName" placeholder="اكتب اسمك">
+
+    <label for="adminCode">رمز الدخول:</label>
+    <div class="input-icon">
+      <input type="password" id="adminCode" placeholder="****">
+      <span onclick="togglePassword()">👁️</span>
+    </div>
+
+    <button class="check-btn" onclick="checkLogin()">✔️ تأكيد الدخول</button>
+
+    <div id="searchSection" class="hidden">
+      <label for="companySelect">اختر الشركة:</label>
+      <select id="companySelect"></select>
+
+      <label for="areaSelect">اختر المنطقة:</label>
+      <select id="areaSelect">
+        <option value="">-- الكل --</option>
+      </select>
+
+      <label for="shipmentNumber">رقم الشحنة (اختياري):</label>
+      <input type="text" id="shipmentNumber" placeholder="أدخل رقم الشحنة">
+
+      <button class="check-btn" onclick="fetchReport()">📄 إظهار التقرير</button>
+
+      <div class="filter">
+        <label for="statusFilter">فلترة حسب الموقف:</label>
+        <select id="statusFilter" onchange="applyFilter()">
+          <option value="">الكل</option>
+          <option value="استلم">استلم</option>
+          <option value="رفض">رفض</option>
+          <option value="تأجيل">تأجيل</option>
+          <!-- أضف باقي المواقف -->
+        </select>
+      </div>
+
+<table id="reportTable">
+  <thead>
+    <tr>
+      <th>رقم الشحنة</th>
+      <th>الاسم</th>
+      <th>الهاتف</th>
+      <th>العنوان</th>
+      <th>المنطقة</th>
+<th>المبلغ المطلوب</th>
+<th>المبلغ المحصل</th>
+<th>العمولة</th>
+      <th>الحالة</th>
+      <th>الملاحظات</th>
+      <th>تعديل</th>
+    </tr>
+  </thead>
+  <tbody id="reportBody">
+    <!-- سيتم تعبئة الصفوف هنا -->
+  </tbody>
+</table>
+
+<!-- ملخص -->
+<div id="summary" style="margin-top:20px; padding:10px; background:#e0f7fa; border-radius:10px;">
+  <p><strong>عدد الشحنات:</strong> <span id="countShipments">0</span></p>
+  <p><strong>إجمالي المبلغ المحصل:</strong> <span id="totalCollected">0</span> جنيه</p>
+  <p><strong>إجمالي العمولة:</strong> <span id="totalCommission">0</span> جنيه</p>
+  <p><strong>المبلغ بعد خصم العمولة:</strong> <span id="netAmount">0</span> جنيه</p>
+</div>
+    </div>
+  </div>
+  <script>
+  // إظهار / إخفاء كلمة المرور
+  function togglePassword() {
+    const pass = document.getElementById("adminCode");
+    pass.type = pass.type === "password" ? "text" : "password";
+  }
+
+  // التحقق من تسجيل الدخول
+  function checkLogin() {
+    const name = document.getElementById("adminName").value.trim();
+    const code = document.getElementById("adminCode").value.trim();
+
+    if (name && code) {
+      document.getElementById("searchSection").classList.remove("hidden");
+      loadCompanies();
+      loadAreas();
+    } else {
+      alert("من فضلك أدخل الاسم ورمز الدخول.");
+    }
+  }
+
+  // تحميل الشركات من ورقة Google Sheets (افتراضيًا)
+  function loadCompanies() {
+    fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?action=companies")
+      .then(res => res.json())
+      .then(data => {
+        const select = document.getElementById("companySelect");
+        select.innerHTML = '<option value="">-- اختر شركة --</option>';
+        data.forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          select.appendChild(opt);
+        });
+      });
+  }
+
+  // تحميل المناطق
+  function loadAreas() {
+    fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?action=areas")
+      .then(res => res.json())
+      .then(data => {
+        const select = document.getElementById("areaSelect");
+        data.forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          select.appendChild(opt);
+        });
+      });
+  }
+
+  // جلب التقرير من الشيت
+  function fetchReport() {
+    const company = document.getElementById("companySelect").value;
+    const area = document.getElementById("areaSelect").value;
+    const shipment = document.getElementById("shipmentNumber").value.trim();
+
+    if (!company) {
+      alert("اختر شركة أولاً.");
+      return;
+    }
+
+    const url = `https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?action=report&company=${encodeURIComponent(company)}&area=${encodeURIComponent(area)}&shipment=${encodeURIComponent(shipment)}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => displayReport(data))
+      .catch(err => alert("حدث خطأ أثناء جلب التقرير."));
+  }
+
+  // عرض التقرير في الجدول
+function displayReport(data) {
+  const tbody = document.getElementById("reportBody");
+  tbody.innerHTML = "";
+
+  let count = 0;
+  let totalCollected = 0;
+  let commission = 0;
+  const commissionRate = 0.05; // نسبة العمولة 5%
+
+  data.forEach((row, index) => {
+    const required = parseFloat(row.required || 0);  // المبلغ المطلوب
+    const collected = parseFloat(row.collected || 0); // المبلغ المحصل
+    const thisCommission = collected * commissionRate;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.tracking}</td>
+      <td>${row.name}</td>
+      <td>${row.phone}</td>
+      <td>${row.address}</td>
+      <td>${row.area}</td>
+      <td>${required.toFixed(2)}</td>
+      <td><input type="number" value="${collected}" onchange="updateField(${index}, 'collected', this.value)"/></td>
+      <td>${thisCommission.toFixed(2)}</td>
+      <td>
+        <select onchange="updateField(${index}, 'status', this.value)">
+          <option value="">--</option>
+          <option ${row.status === 'استلم' ? 'selected' : ''}>استلم</option>
+          <option ${row.status === 'رفض' ? 'selected' : ''}>رفض</option>
+          <option ${row.status === 'تأجيل' ? 'selected' : ''}>تأجيل</option>
+        </select>
+      </td>
+      <td><input type="text" value="${row.notes}" onchange="updateField(${index}, 'notes', this.value)"/></td>
+      <td>✔️</td>
+    `;
+
+    tbody.appendChild(tr);
+    count++;
+    totalCollected += collected;
+    commission += thisCommission;
+  });
+
+  // تحديث ملخص التقرير
+  document.getElementById("countShipments").textContent = count;
+  document.getElementById("totalCollected").textContent = totalCollected.toFixed(2);
+  document.getElementById("totalCommission").textContent = commission.toFixed(2);
+  document.getElementById("netAmount").textContent = (totalCollected - commission).toFixed(2);
+}
+
+  // فلترة حسب الموقف
+  function applyFilter() {
+    const filter = document.getElementById("statusFilter").value;
+    const rows = document.querySelectorAll("#reportBody tr");
+
+    rows.forEach(row => {
+      const status = row.children[6].querySelector("select").value;
+      row.style.display = (!filter || status === filter) ? "" : "none";
+    });
+  }
+
+  // تعديل الموقف أو المبلغ أو الملاحظات
+  function updateField(index, field, value) {
+    const company = document.getElementById("companySelect").value;
+
+    fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "update",
+        company: company,
+        index: index,
+        field: field,
+        value: value
+      })
+    }).then(res => res.text())
+      .then(msg => console.log("تم التعديل:", msg));
+  }
+</script>
+</body>
+</html>

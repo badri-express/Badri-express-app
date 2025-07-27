@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Badri Express</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 0; }
+    .navbar {
+      display: flex; justify-content: space-around; background: #1d3557; color: white; padding: 10px 0;
+    }
+    .navbar button {
+      background: none; border: none; color: white; font-size: 16px; cursor: pointer;
+    }
+    .navbar button:hover { text-decoration: underline; }
+    .page { display: none; padding: 20px; }
+    .active { display: block; }
+    input, select, button, textarea {
+      display: block; margin: 10px auto; padding: 10px; width: 100%; max-width: 400px; border-radius: 5px;
+      border: 1px solid #ccc; font-size: 16px;
+    }
+    .container {
+      padding: 20px; max-width: 600px; margin: auto; background: white; box-shadow: 0 0 10px #ccc; border-radius: 8px;
+    }
+    label { font-weight: bold; display: block; margin: 10px auto 5px; max-width: 400px; }
+    .remember-container {
+      display: flex; justify-content: space-between; align-items: center; max-width: 400px; margin: 5px auto;
+    }
+    .eye-toggle { cursor: pointer; font-size: 18px; }
+    .phone-icon {
+      background: #06d6a0; color: white; padding: 8px 12px; border-radius: 5px; text-decoration: none;
+      font-size: 16px; display: inline-block; margin-right: 10px;
+    }
+    .flex-row { display: flex; align-items: center; justify-content: space-between; max-width: 400px; margin: auto; }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <button onclick="showPage('register')">تسجيل</button>
+    <button onclick="showPage('report')">التقارير</button>
+    <button onclick="showPage('admin')">الإدارة</button>
+  </div>
+
+  <div class="container">
+
+    <div id="register" class="page active">
+      <h2>تسجيل موقف شحنة</h2>
+
+      <label>اسم الشركة</label>
+      <select id="company">
+        <option value="">اختر الشركة</option>
+        <option>الجوكر</option>
+        <option>داما</option>
+        <option>الفهد</option>
+        <option>الهواري</option>
+        <option>إنيرجي</option>
+      </select>
+
+      <label>المنطقة</label>
+      <select id="area">
+        <option value="">اختر المنطقة</option>
+        <option>سفاجا</option><option>القصير</option><option>غارب</option><option>احياء</option><option>ابو</option>
+        <option>جبريل</option><option>كوثر</option><option>حفر</option><option>جونة</option><option>شيري</option>
+        <option>سقالة</option><option>مدارس</option><option>ذهب</option><option>كهف</option><option>دهار</option>
+        <option>رشاد</option><option>محمود</option><option>وليد</option><option>مكتب</option><option>سوماباي</option>
+        <option>سهل</option><option>مكادي</option>
+      </select>
+
+      <div class="remember-container">
+        <label>رمز الدخول</label>
+        <span class="eye-toggle" onclick="togglePassword()">👁</span>
+      </div>
+      <input type="password" id="passcode" placeholder="أدخل رمز الدخول" />
+      <div class="remember-container">
+        <label><input type="checkbox" id="remember"> تذكرنى</label>
+      </div>
+
+      <input type="text" id="tracking" placeholder="رقم الشحنة" onblur="fetchShipmentData()" />
+      <div id="shipmentData" style="text-align:right; max-width:400px; margin:auto; font-size: 15px;"></div>
+
+      <label>الموقف</label>
+      <select id="status">
+        <option value="">اختر الموقف</option>
+        <option>استلم</option><option>لا يرد</option><option>جزئي</option><option>رفض ورفض</option><option>رفض ودفع</option>
+        <option>مغلق</option><option>مسافر</option><option>تأجيل</option><option>بعد التنسيق لا يرد</option>
+        <option>بعد التنسيق مغلق</option><option>تهرب</option><option>مكرر</option><option>مش طالب حاجة</option>
+        <option>رقم خاطئ</option><option>خارج النطاق</option><option>تغيير عنوان</option><option>استلم بعلم الشركة</option>
+        <option>عهدة</option><option>عهدة مكتب</option><option>لاغي</option>
+      </select>
+
+      <input type="number" id="collected" placeholder="المبلغ المحصل" />
+      <textarea id="notes" placeholder="ملاحظات (إن وجدت)"></textarea>
+      <button onclick="submitForm()">تسجيل</button>
+      <div id="response"></div>
+    </div>
+
+    <div id="report" class="page">
+      <h2>صفحة التقارير (تحت التطوير)</h2>
+    </div>
+
+    <div id="admin" class="page">
+      <h2>صفحة الإدارة (تحت التطوير)</h2>
+    </div>
+
+  </div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxs0kOLW2sYUesiOpr5iaRK4QZGn19h74wHIisgNYivaHtMmwosn4/exec";
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+    }
+
+    function togglePassword() {
+      const input = document.getElementById("passcode");
+      input.type = input.type === "password" ? "text" : "password";
+    }
+
+    function fetchShipmentData() {
+      const tracking = document.getElementById("tracking").value;
+      const company = document.getElementById("company").value;
+      if (tracking && company) {
+        document.getElementById("shipmentData").innerHTML = `
+          <p><strong>اسم العميل:</strong> جاري التحميل...</p>
+          <p><strong>رقم الهاتف:</strong> <a href="tel:" class="phone-icon">📞 اتصال</a></p>
+          <p><strong>العنوان:</strong> ...</p>
+          <p><strong>المبلغ المطلوب:</strong> ...</p>
+          <p><strong>سعر الفاتورة:</strong> ...</p>
+        `;
+        // الربط الفعلي بالشيت من خلال الاسكربت عند التنفيذ الفعلي
+      }
+    }
+
+    function submitForm() {
+      const data = new FormData();
+      data.append("tracking", document.getElementById("tracking").value);
+      data.append("company", document.getElementById("company").value);
+      data.append("area", document.getElementById("area").value);
+      data.append("passcode", document.getElementById("passcode").value);
+      data.append("status", document.getElementById("status").value);
+      data.append("collected", document.getElementById("collected").value);
+      data.append("notes", document.getElementById("notes").value);
+
+      fetch(scriptURL, { method: 'POST', body: data })
+        .then(res => res.text())
+        .then(txt => {
+          document.getElementById("response").innerHTML = "<p style='color:green'>تم الإرسال بنجاح</p>";
+        })
+        .catch(err => {
+          document.getElementById("response").innerHTML = "<p style='color:red'>حدث خطأ، حاول مرة أخرى</p>";
+        });
+    }
+  </script>
+
+</body>
+</html>
